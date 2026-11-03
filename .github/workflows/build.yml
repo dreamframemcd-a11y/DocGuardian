@@ -1,0 +1,171 @@
+# =============================================================================
+# DocGuardian — GitHub Actions 云编译（免费 Apple ID 侧载方案）
+# =============================================================================
+# 作用：在 GitHub 免费提供的 macOS 虚拟机上，把你的 Swift 代码编译成
+#       可以用 Sideloadly(Windows) 侧载到 iPhone 的 .ipa 文件。
+#
+# 工作流程：
+#   git push  →  自动编译  →  产出 DocGuardian-unsigned.ipa  →  下载  →  Sideloadly 装机
+#
+# 重要提示（免费 Apple ID 的固有限制）：
+#   1. 本流程产出的是「未签名」IPA，由你在 Windows 上用 Sideloadly 签名后安装。
+#   2. 免费 Apple ID 不支持 iCloud / CloudKit / 推送通知这 3 个 entitlement，
+#      因此 App 能跑、扫描/OCR/分类/本地提醒全部可用，但「多设备云同步」不可用。
+#   3. 免费账号签名的 App 有效期 7 天，到期需重新用 Sideloadly 签一次。
+#      想长期使用 + 开启 CloudKit 同步，需要 Apple Developer Program（$99/年）。
+#
+# 使用前提：把 DocGuardian 这个文件夹作为独立仓库推到 GitHub。
+#   git init && git add . && git commit -m "init" 
+#   git remote add origin https://github.com/<你的用户名>/DocGuardian.git
+#   git push -u origin main
+# =============================================================================
+
+name: Build DocGuardian IPA
+
+on:
+  # 每次 push 到主分支自动编译
+  push:
+    branches: [ main, master ]
+  # 允许在 GitHub 网页上手动点按钮触发
+  workflow_dispatch:
+
+  # 手动触发入口（Actions 页面 → Run workflow）
+
+# 同一分支连续 push 时，取消上一个还在跑的构建，节省额度
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Xcode 工程名 / Scheme 名
+  SCHEME: DocGuardian
+  PROJECT: DocGuardian.xcodeproj
+
+jobs:
+  build:
+    name: Build unsigned IPA
+    # GitHub 免费提供的 macOS 虚拟机（已预装 Xcode）
+    runs-on: macos-15
+    timeout-minutes: 40
+
+    steps:
+      # ---------------------------------------------------------------
+      # 1. 拉取代码
+      # ---------------------------------------------------------------
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ---------------------------------------------------------------
+      # 2. 选择 Xcode 版本（latest-stable = 该镜像预装的最新稳定版）
+      # ---------------------------------------------------------------
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Print toolchain versions
+        run: |
+          xcodebuild -version
+          swift --version
+
+      # ---------------------------------------------------------------
+      # 3. 安装 XcodeGen，并由 project.yml 生成 .xcodeproj
+      # ---------------------------------------------------------------
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: |
+          xcodegen generate
+          echo "--- 生成结果 ---"
+          ls -la
+          echo "--- Scheme 列表 ---"
+          xcodebuild -project "$PROJECT" -list
+
+      # ---------------------------------------------------------------
+      # 4. 编译（关闭代码签名 → 产出未签名 .app）
+      #    continue-on-error 让我们能先把编译错误提取出来再判定失败
+      # ---------------------------------------------------------------
+      - name: Build (code signing disabled)
+        id: build
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Debug \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_ENTITLEMENTS="" \
+            DEVELOPMENT_TEAM="" \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=NO \
+            2>&1 | tee build.log
+
+      # ---------------------------------------------------------------
+      # 5. 编译失败时，把关键错误行提取到 Actions 页面顶部（便于排查）
+      # ---------------------------------------------------------------
+      - name: Report compile errors
+        if: steps.build.outcome == 'failure'
+        run: |
+          echo "======================================================"
+          echo " 编译失败 —— 以下是 error: 行（按文件:行号 排列）"
+          echo "======================================================"
+          grep -n "error:" build.log || echo "（未匹配到 error: 关键字，请下载 build-log 附件查看完整输出）"
+          echo "======================================================"
+          echo " 失败的构建命令"
+          echo "======================================================"
+          grep -n -E "BUILD FAILED|The following build commands failed|Command .* failed" -A 5 build.log || true
+
+      - name: Mark job as failed
+        if: steps.build.outcome == 'failure'
+        run: exit 1
+
+      # ---------------------------------------------------------------
+      # 6. 打包成 .ipa（Payload/DocGuardian.app 的 zip 结构）
+      # ---------------------------------------------------------------
+      - name: Package unsigned IPA
+        if: steps.build.outcome == 'success'
+        run: |
+          APP="build/Build/Products/Debug-iphoneos/$SCHEME.app"
+          if [ ! -d "$APP" ]; then
+            echo "::error::未找到编译产物 $APP"
+            find build/Build/Products -maxdepth 3 -name "*.app" || true
+            exit 1
+          fi
+          mkdir -p out/Payload
+          cp -R "$APP" out/Payload/
+          cd out
+          zip -qry "DocGuardian-unsigned.ipa" Payload
+          echo "--- IPA 内容 ---"
+          unzip -l "DocGuardian-unsigned.ipa" | head -20
+          echo "--- IPA 大小 ---"
+          du -h "DocGuardian-unsigned.ipa"
+
+      # ---------------------------------------------------------------
+      # 7. 上传 IPA 供下载
+      # ---------------------------------------------------------------
+      - name: Upload IPA artifact
+        if: steps.build.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: DocGuardian-unsigned-ipa
+          path: out/DocGuardian-unsigned.ipa
+          retention-days: 30
+          if-no-files-found: error
+
+      # ---------------------------------------------------------------
+      # 8. 无论成功失败都保留编译日志
+      # ---------------------------------------------------------------
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          retention-days: 7
+          if-no-files-found: warn
