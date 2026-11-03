@@ -68,7 +68,9 @@ final class Document {
     @Relationship(deleteRule: .cascade, inverse: \ExtractedField.document)
     var extractedFields: [ExtractedField] = []
 
-    @Relationship(deleteRule: .cascade)
+    // Many-to-many with Tag. No cascade: deleting a document must NOT delete
+    // shared tag objects, and deleting a tag must NOT delete documents.
+    @Relationship
     var tags: [Tag] = []
 
     // MARK: Computed helpers

@@ -60,7 +60,9 @@ final class ExtractedField {
         set { kindRaw = newValue.rawValue }
     }
 
-    @Relationship(inverse: \Document.extractedFields)
+    // NOTE: the `inverse:` is declared ONLY on Document.extractedFields.
+    // Declaring it on both sides makes the SwiftData macro expansion fail with
+    // "circular reference resolving attached macro 'Relationship'".
     var document: Document?
 
     init(

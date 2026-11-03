@@ -36,10 +36,12 @@ struct RootView: View {
                     .environmentObject(listVM)
             }
         }
+        // Propagate the lock service to every descendant — SettingsView reads it
+        // via @EnvironmentObject. Without this the app crashes on the Settings tab.
+        .environmentObject(lock)
         .overlay {
             if lock.isLocked {
                 LockScreenView()
-                    .environmentObject(lock)
                     .transition(.opacity)
             }
         }

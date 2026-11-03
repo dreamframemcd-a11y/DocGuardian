@@ -10,7 +10,8 @@ import SwiftUI
 
 struct ReviewView: View {
 
-    @ObservedObject var document: Document
+    // SwiftData @Model classes are NOT ObservableObject — use @Bindable.
+    @Bindable var document: Document
     let onSave: (Document) async -> Void
 
     @Environment(\.dismiss) private var dismiss

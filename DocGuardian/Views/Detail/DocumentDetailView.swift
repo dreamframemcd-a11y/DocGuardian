@@ -12,7 +12,8 @@ struct DocumentDetailView: View {
 
     @EnvironmentObject var listVM: DocumentListViewModel
     @Environment(\.dismiss) private var dismiss
-    @ObservedObject var document: Document
+    // SwiftData @Model classes are NOT ObservableObject — use @Bindable.
+    @Bindable var document: Document
 
     @State private var showDeleteConfirm = false
     @State private var shareOCR = false
