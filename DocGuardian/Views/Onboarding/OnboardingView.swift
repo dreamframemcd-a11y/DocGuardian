@@ -72,7 +72,7 @@ struct OnboardingView: View {
         VStack(spacing: 20) {
             Image(systemName: page.icon)
                 .font(.system(size: 80))
-                .foregroundStyle(.accentColor)
+                .foregroundStyle(Color.accentColor)
                 .padding()
                 .background(Color.accentColor.opacity(0.15), in: Circle())
 

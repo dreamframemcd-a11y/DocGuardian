@@ -96,7 +96,7 @@ struct TagManagementView: View {
         } label: {
             HStack {
                 Image(systemName: "tag.fill")
-                    .foregroundStyle(.accentColor)
+                    .foregroundStyle(Color.accentColor)
                 Text(tagName)
                 Spacer()
                 Text("\(count) doc\(count == 1 ? "" : "s")")

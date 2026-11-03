@@ -101,7 +101,7 @@ struct FilterPanelView: View {
                 Text(label)
                 Spacer()
                 if listVM.selectedCategory == type {
-                    Image(systemName: "checkmark").foregroundStyle(.accentColor)
+                    Image(systemName: "checkmark").foregroundStyle(Color.accentColor)
                 }
             }
             .contentShape(Rectangle())
@@ -117,7 +117,7 @@ struct FilterPanelView: View {
                 Text(label)
                 Spacer()
                 if listVM.selectedTag == tag {
-                    Image(systemName: "checkmark").foregroundStyle(.accentColor)
+                    Image(systemName: "checkmark").foregroundStyle(Color.accentColor)
                 }
             }
             .contentShape(Rectangle())

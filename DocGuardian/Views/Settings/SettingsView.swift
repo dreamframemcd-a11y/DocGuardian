@@ -148,7 +148,7 @@ struct SettingsView: View {
                 Text("Privacy Policy")
             }
             Link("Support", destination: URL(string: "https://example.com/docguardian/support")!)
-                .foregroundStyle(.accentColor)
+                .foregroundStyle(Color.accentColor)
         }
     }
 }

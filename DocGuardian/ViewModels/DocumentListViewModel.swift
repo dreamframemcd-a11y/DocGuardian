@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Combine
 import SwiftData
 import CloudKit
 
@@ -65,14 +66,14 @@ final class DocumentListViewModel: ObservableObject {
         // Update local cache.
         if let ctx = modelContext {
             for doc in documents {
-                do {
-                    // SwiftData throws if trying to insert a model with a duplicate @Attribute(.unique).
-                    // We simply attempt a fetch-by-id first to avoid that.
-                    let existing = try ctx.fetch(.init(id: doc.id))
-                    if existing.isEmpty {
-                        ctx.insert(doc)
-                    }
-                } catch {
+                let targetID = doc.id
+                // `id` is @Attribute(.unique), so inserting a duplicate would throw.
+                // Fetch first and only insert when the record is genuinely new.
+                let descriptor = FetchDescriptor<Document>(
+                    predicate: #Predicate { $0.id == targetID }
+                )
+                let existing = (try? ctx.fetch(descriptor)) ?? []
+                if existing.isEmpty {
                     ctx.insert(doc)
                 }
             }

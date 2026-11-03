@@ -163,7 +163,9 @@ struct DocumentListView: View {
         Button { listVM.toggleSelect(doc) } label: {
             HStack {
                 Image(systemName: listVM.selectedIDs.contains(doc.id) ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(listVM.selectedIDs.contains(doc.id) ? .accentColor : .tertiary)
+                    // Both branches must be the same type — Color — because a
+                    // ternary cannot mix Color.accentColor with a ShapeStyle.
+                    .foregroundStyle(listVM.selectedIDs.contains(doc.id) ? Color.accentColor : Color.secondary)
                 docContent(doc)
             }
         }

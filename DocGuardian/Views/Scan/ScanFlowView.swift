@@ -76,7 +76,7 @@ struct ScanFlowView: View {
             Spacer()
             Image(systemName: "doc.text.viewfinder")
                 .font(.system(size: 64))
-                .foregroundStyle(.accentColor)
+                .foregroundStyle(Color.accentColor)
             Text("Choose your source")
                 .font(.title2.weight(.semibold))
             Text("DocGuardian supports camera scans, photos, and PDFs from Files.")
@@ -110,7 +110,7 @@ struct ScanFlowView: View {
             HStack(spacing: 16) {
                 Image(systemName: systemImage)
                     .font(.title2)
-                    .foregroundStyle(.accentColor)
+                    .foregroundStyle(Color.accentColor)
                     .frame(width: 44, height: 44)
                     .background(Color.accentColor.opacity(0.15), in: RoundedRectangle(cornerRadius: 10))
                 VStack(alignment: .leading, spacing: 2) {
