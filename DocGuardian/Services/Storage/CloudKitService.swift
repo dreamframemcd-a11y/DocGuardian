@@ -48,18 +48,28 @@ final class CloudKitService {
         var cursor: CKQueryOperation.Cursor?
 
         repeat {
-            let (matchResults, nextCursor) = try await database.records(
-                matching: query,
-                resultsLimit: CKQueryOperation.maximumResults,
-                cursor: cursor
-            )
-            for (_, recordResult) in matchResults {
+            // The first page uses `records(matching:)`; subsequent pages must use
+            // `records(continuingMatchFrom:)` — there is no `cursor:` parameter.
+            let page: (matchResults: [(CKRecord.ID, Result<CKRecord, Error>)],
+                       queryCursor: CKQueryOperation.Cursor?)
+            if let current = cursor {
+                page = try await database.records(
+                    continuingMatchFrom: current,
+                    resultsLimit: CKQueryOperation.maximumResults
+                )
+            } else {
+                page = try await database.records(
+                    matching: query,
+                    resultsLimit: CKQueryOperation.maximumResults
+                )
+            }
+            for (_, recordResult) in page.matchResults {
                 if case .success(let record) = recordResult,
                    let doc = Document(from: record) {
                     result.append(doc)
                 }
             }
-            cursor = nextCursor
+            cursor = page.queryCursor
         } while cursor != nil
 
         return result

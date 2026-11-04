@@ -66,8 +66,8 @@ final class TagService {
             .lowercased()
 
         // Look up canonical name.
-        if let canonical = issuerCanonicalMap.first(where: { cleaned.contains($0.key) })?.value {
-            return canonical
+        if let entry = issuerCanonicalMap.first(where: { cleaned.contains($0.key) }) {
+            return entry.canonical
         }
 
         // Fallback: clean up minor suffixes.

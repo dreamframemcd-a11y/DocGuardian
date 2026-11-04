@@ -264,7 +264,8 @@ final class DocumentListViewModel: ObservableObject {
 
     func monthlyStats(for month: Date = Date()) -> MonthlyStats {
         let cal = Calendar.current
-        let interval = cal.dateInterval(of: .month, for: month)
+        // `dateInterval(of:for:)` is optional — bail out with empty stats if it fails.
+        guard let interval = cal.dateInterval(of: .month, for: month) else { return MonthlyStats() }
         let monthDocs = documents.filter {
             // Include if created this month OR has due date this month.
             let inRange = { (_ date: Date?) -> Bool in

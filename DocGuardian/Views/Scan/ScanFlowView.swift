@@ -38,6 +38,7 @@ struct ScanFlowView: View {
             Group {
                 switch step {
                 case .picker:      sourcePicker
+                case .photosPicker: EmptyView()   // the system PhotosPicker sheet covers this state
                 case .processing:  processingView
                 case .review:      if let doc = processedDocument { ReviewView(document: doc, onSave: save) }
                 case .complete:    completeView

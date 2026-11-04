@@ -48,7 +48,7 @@ final class VisionOCRService: OCRService {
         request.recognitionLevel = .accurate
         request.usesLanguageCorrection = true
         request.recognitionLanguages = ["en-US", "es-ES", "fr-FR", "de-DE"]
-        request.minimumTextHeightFraction = 0.01   // capture small-print footers
+        request.minimumTextHeight = 0.01   // capture small-print footers
         return request
     }
 }

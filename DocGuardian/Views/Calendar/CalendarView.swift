@@ -76,7 +76,7 @@ struct CalendarView: View {
     private func cell(for date: Date?) -> some View {
         let hasDue = date.flatMap { hasDueOn($0) } ?? false
         let isToday = date.map { calendar.isDateInToday($0) } ?? false
-        let isSelected = date.map { calendar.isDate(date, inSameDayAs: selectedDate) } ?? false
+        let isSelected = date.map { calendar.isDate($0, inSameDayAs: selectedDate) } ?? false
 
         return Button {
             if let date { selectedDate = date }

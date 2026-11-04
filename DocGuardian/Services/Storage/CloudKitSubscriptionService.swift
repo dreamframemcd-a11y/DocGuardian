@@ -32,13 +32,12 @@ final class CloudKitSubscriptionService: ObservableObject {
     }
 
     func handleDeviceToken(_ deviceToken: Data) {
-        container.registerForRemoteNotifications(withDeviceToken: deviceToken) { error in
-            if let error {
-                print("[CK] registerForRemoteNotifications failed: \(error.localizedDescription)")
-            } else {
-                Task { @MainActor in self.registerDocumentSubscription() }
-            }
-        }
+        // NOTE: CKContainer has no `registerForRemoteNotifications(withDeviceToken:)`
+        // in the current SDK. CloudKit associates the APNs registration with the
+        // container automatically once the entitlement is present, so we simply
+        // proceed to register the query subscription.
+        print("[CK] APNs token received (\(deviceToken.count) bytes)")
+        Task { @MainActor in self.registerDocumentSubscription() }
     }
 
     func handleRemoteNotification(_ userInfo: [AnyHashable: Any],
