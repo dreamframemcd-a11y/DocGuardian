@@ -37,7 +37,7 @@ final class CloudKitSubscriptionService: ObservableObject {
         // container automatically once the entitlement is present, so we simply
         // proceed to register the query subscription.
         print("[CK] APNs token received (\(deviceToken.count) bytes)")
-        Task { @MainActor in self.registerDocumentSubscription() }
+        Task { @MainActor in await self.registerDocumentSubscription() }
     }
 
     func handleRemoteNotification(_ userInfo: [AnyHashable: Any],

@@ -48,8 +48,8 @@ final class TagService {
         tags.append(contentsOf: compositeTags(for: document))
 
         // Deduplicate, preserving order.
-        let seen = NSMutableSet()
-        let uniqueNames = tags.filter { seen.add($0) }
+        var seen = Set<String>()
+        let uniqueNames = tags.filter { seen.insert($0).inserted }
 
         return uniqueNames.map { Tag(name: $0) }
     }
